@@ -86,21 +86,21 @@ public class SkillEntryGui extends AbstractSkillTreeGui {
         if (description.isEmpty()) {
             return Collections.emptyList();
         } else {
-            List<String> list = this.minecraft.fontRenderer.listFormattedStringToWidth(description, width);
+            List<String> list = minecraft.fontRenderer.listFormattedStringToWidth(description, width);
             if (list.size() < 2) {
                 return list;
             } else {
                 String s = list.get(0);
                 String s1 = list.get(1);
-                int i = this.minecraft.fontRenderer.getStringWidth(s + ' ' + s1.split(" ")[0]);
+                int i = minecraft.fontRenderer.getStringWidth(s + ' ' + s1.split(" ")[0]);
                 if (i - width <= 10) {
-                    return this.minecraft.fontRenderer.listFormattedStringToWidth(description, i);
+                    return minecraft.fontRenderer.listFormattedStringToWidth(description, i);
                 } else {
                     Matcher matcher = SENTENCE_PATTERN.matcher(s);
                     if (matcher.matches()) {
-                        int j = this.minecraft.fontRenderer.getStringWidth(matcher.group(1));
+                        int j = minecraft.fontRenderer.getStringWidth(matcher.group(1));
                         if (width - j <= 10) {
-                            return this.minecraft.fontRenderer.listFormattedStringToWidth(description, j);
+                            return minecraft.fontRenderer.listFormattedStringToWidth(description, j);
                         }
                     }
 
@@ -125,13 +125,13 @@ public class SkillEntryGui extends AbstractSkillTreeGui {
     public void draw(int left, int top, boolean hasSkill) {
         if (getSkill().isHidden())
             return;
-
         int x = getX() + 3 + left;
         int y = getY() + 3 + top;
         getDisplayInfo().getFrame().drawFrame(minecraft, x, y, hasSkill);
         minecraft.getItemRenderer().renderItemAndEffectIntoGUI(null, skill.getIcon(), x + 5, y + 5);
         if (!hasSkill)
             drawLock(x, y);
+
     }
 
     public void drawLock(int left, int top) {
@@ -140,6 +140,7 @@ public class SkillEntryGui extends AbstractSkillTreeGui {
         RenderSystem.disableDepthTest();
         draw2DTex(left + 4, top + 4, ClientSkillApi.hasRequirements(getSkill()) ? 18 : 0, 176,
                 18, 18);
+        RenderSystem.enableDepthTest();
     }
 
     public void drawChildren(int left, int top) {
@@ -344,20 +345,20 @@ public class SkillEntryGui extends AbstractSkillTreeGui {
 
     }
 
-    protected void render9Sprite(int left, int top, int width, int height, int texWidth, int uOffset, int vOffset, int u, int v) {
+    protected void render9Sprite(int left, int top, int horizontalWidth, int height, int size, int uOffset, int vOffset, int u, int v) {
         // Renders top left corner
-        AbstractSkillTreeGui.draw2DWithOffset(left, top, 0, u, v, texWidth, texWidth);
-        this.renderRepeating(left + texWidth, top, width - texWidth - texWidth, texWidth, u + texWidth, v, uOffset - texWidth - texWidth, vOffset);
+        AbstractSkillTreeGui.draw2DWithOffset(left, top, 0, u, v, size, size);
+        this.renderRepeating(left + size, top, horizontalWidth - size - size, size, u + size, v, uOffset - size - size, vOffset);
         //Renders top right corner
-        AbstractSkillTreeGui.draw2DTex(left + width - texWidth, top, u + uOffset - texWidth, v, texWidth, texWidth);
+        AbstractSkillTreeGui.draw2DTex(left + horizontalWidth - size, top, u + uOffset - size, v, size, size);
         // Renders bottom left corner
-        AbstractSkillTreeGui.draw2DTex(left, top + height - texWidth, u, v + vOffset - texWidth, texWidth, texWidth);
-        this.renderRepeating(left + texWidth, top + height - texWidth, width - texWidth - texWidth, texWidth, u + texWidth, v + vOffset - texWidth, uOffset - texWidth - texWidth, vOffset);
+        AbstractSkillTreeGui.draw2DTex(left, top + height - size, u, v + vOffset - size, size, size);
+        this.renderRepeating(left + size, top + height - size, horizontalWidth - size - size, size, u + size, v + vOffset - size, uOffset - size - size, vOffset);
         // Renders bottom right corner
-        AbstractSkillTreeGui.draw2DTex(left + width - texWidth, top + height - texWidth, u + uOffset - texWidth, v + vOffset - texWidth, texWidth, texWidth);
-        this.renderRepeating(left, top + texWidth, texWidth, height - texWidth - texWidth, u, v + texWidth, uOffset, vOffset - texWidth - texWidth);
-        this.renderRepeating(left + texWidth, top + texWidth, width - texWidth - texWidth, height - texWidth - texWidth, u + texWidth, v + texWidth, uOffset - texWidth - texWidth, vOffset - texWidth - texWidth);
-        this.renderRepeating(left + width - texWidth, top + texWidth, texWidth, height - texWidth - texWidth, u + uOffset - texWidth, v + texWidth, uOffset, vOffset - texWidth - texWidth);
+        AbstractSkillTreeGui.draw2DTex(left + horizontalWidth - size, top + height - size, u + uOffset - size, v + vOffset - size, size, size);
+        this.renderRepeating(left, top + size, size, height - size - size, u, v + size, uOffset, vOffset - size - size);
+        this.renderRepeating(left + size, top + size, horizontalWidth - size - size, height - size - size, u + size, v + size, uOffset - size - size, vOffset - size - size);
+        this.renderRepeating(left + horizontalWidth - size, top + size, size, height - size - size, u + uOffset - size, v + size, uOffset, vOffset - size - size);
     }
 
     protected void renderRepeating(int p_192993_1_, int p_192993_2_, int p_192993_3_, int p_192993_4_, int p_192993_5_, int p_192993_6_, int p_192993_7_, int p_192993_8_) {
