@@ -1,0 +1,11 @@
+Logical Client Side:
+  - Register Key Press (k)
+    + Toggle Open Status
+  - Draw GUI to screen
+    + Draw Buttons
+    + Register Clicks on buttons
+    + Make packet request on click
+
+Logical Server Side:
+  - Keep Track of Player stats
+  - Receive and Respond to Client Request Packets
