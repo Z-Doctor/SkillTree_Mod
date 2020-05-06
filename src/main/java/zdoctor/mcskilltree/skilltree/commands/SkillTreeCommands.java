@@ -9,12 +9,14 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
-import net.minecraft.command.ISuggestionProvider;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.command.arguments.ResourceLocationArgument;
+import net.minecraft.command.impl.GiveCommand;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ResourceLocation;
@@ -31,18 +33,44 @@ import zdoctor.mcskilltree.skills.Skill;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber
 public class SkillTreeCommands {
     private static final DynamicCommandExceptionType SKILL_NOT_FOUND = new DynamicCommandExceptionType((skill) -> new TranslationTextComponent("skill.skillNotFound", skill));
 
+    // TODO Flickering, non-issue but annoying
     public static final SuggestionProvider<CommandSource> SUGGEST_SKILL = (context, builder) -> {
         Collection<Skill> collection = SkillTreeRegistries.SKILLS.getValues();
-        return ISuggestionProvider.func_212476_a(collection.stream().map(Skill::getRegistryName), builder);
+        return searchLocations(collection.stream().map(Skill::getRegistryName)::iterator, builder);
     };
+
+    public static CompletableFuture<Suggestions> searchLocations(Iterable<ResourceLocation> iterable, SuggestionsBuilder builder) {
+        String s = builder.getRemaining().toLowerCase(Locale.ROOT);
+        parseForNamespace(iterable, s, location -> location,
+                location -> builder.suggest(location.toString()));
+        return builder.buildFuture();
+    }
+
+    public static <T> void parseForNamespace(Iterable<T> iterable, String strIn, Function<T, ResourceLocation> converter, Consumer<T> transformer) {
+        boolean flag = strIn.indexOf(58) > -1;
+        for (T t : iterable) {
+            ResourceLocation resourcelocation = converter.apply(t);
+            String s = resourcelocation.toString();
+            if (flag) {
+                if (s.startsWith(strIn)) {
+                    transformer.accept(t);
+                }
+            } else if (s.contains(strIn)) {
+                transformer.accept(t);
+            }
+        }
+
+    }
 
     public static final RequiredArgumentBuilder<CommandSource, ResourceLocation> SKILL_RESOURCE = Commands.argument("skill", ResourceLocationArgument.resourceLocation());
 
