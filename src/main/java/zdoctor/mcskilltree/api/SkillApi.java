@@ -17,8 +17,10 @@ public class SkillApi {
 
     public static ISkillHandler getSkillHandler(LivingEntity entity) {
         LazyOptional<ISkillHandler> cap = entity.getCapability(SKILL_CAPABILITY);
-        if(!cap.isPresent())
-            McSkillTree.LOGGER.error("{} does not have skill capability or you tried to access capability before it got attached to entity.", entity);
+        if (!cap.isPresent()) {
+            // TODO Config to disable this message
+            McSkillTree.LOGGER.debug("{} does not have skill capability or you tried to access capability before it got attached to entity.", entity);
+        }
         ISkillHandler skillHandler = cap.orElse(ISkillHandler.EMPTY);
         if (skillHandler.getOwner() == null)
             skillHandler.setOwner(entity);

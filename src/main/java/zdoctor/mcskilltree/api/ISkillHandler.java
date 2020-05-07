@@ -8,6 +8,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 import zdoctor.mcskilltree.skills.Skill;
+import zdoctor.mcskilltree.skills.SkillData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,6 +35,7 @@ public interface ISkillHandler extends ICapabilitySerializable<CompoundNBT>, Cap
     boolean give(Skill skill);
     boolean revoke(Skill skill);
     boolean hasSkill(Skill skill);
+    SkillData getData(Skill skill);
     int getTier(Skill skill);
     void setTier(Skill skill, int tier);
     boolean hasRequirements(Skill skill);
@@ -101,6 +103,11 @@ public interface ISkillHandler extends ICapabilitySerializable<CompoundNBT>, Cap
         @Override
         public boolean hasSkill(Skill skill) {
             return false;
+        }
+
+        @Override
+        public SkillData getData(Skill skill) {
+            return null;
         }
 
         @Override

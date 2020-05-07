@@ -1,6 +1,9 @@
 package zdoctor.mcskilltree.skills;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.JSONUtils;
 import zdoctor.mcskilltree.api.ISkillProperty;
 
 import javax.annotation.Nonnull;
@@ -67,6 +70,23 @@ public abstract class SkillProperty<T> implements ISkillProperty<T> {
         public IntProperty copy() {
             return SkillProperty.withDefault(getKey(), getValue());
         }
+
+        @Override
+        public JsonObject serialize() {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty(getKey(), getValue());
+            return jsonObject;
+        }
+
+        @Override
+        public IntProperty deserialize(JsonElement element) {
+            if (element != null && !element.isJsonNull()) {
+                JsonObject jsonObject = JSONUtils.getJsonObject(element, "property_object");
+                int value = jsonObject.get(getKey()).getAsInt();
+                return new IntProperty(getKey(), () -> value);
+            }
+            return null;
+        }
     }
 
     public static class BooleanProperty extends SkillProperty<Boolean> {
@@ -92,6 +112,22 @@ public abstract class SkillProperty<T> implements ISkillProperty<T> {
             return SkillProperty.withDefault(getKey(), getValue());
         }
 
+        @Override
+        public JsonObject serialize() {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty(getKey(), getValue());
+            return jsonObject;
+        }
+
+        @Override
+        public BooleanProperty deserialize(JsonElement element) {
+            if (element != null && !element.isJsonNull()) {
+                JsonObject jsonObject = JSONUtils.getJsonObject(element, "property_object");
+                boolean value = jsonObject.get(getKey()).getAsBoolean();
+                return new BooleanProperty(getKey(), () -> value);
+            }
+            return null;
+        }
 
     }
 }

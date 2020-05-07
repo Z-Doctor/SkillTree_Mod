@@ -144,6 +144,11 @@ public class SkillHandler implements ISkillHandler {
     }
 
     @Override
+    public SkillData getData(Skill skill) {
+        return Skill_Codex.getOrDefault(skill, null);
+    }
+
+    @Override
     public int getTier(Skill skill) {
         return !hasSkill(skill) ? 0 : Skill_Codex.get(skill).getTier();
     }

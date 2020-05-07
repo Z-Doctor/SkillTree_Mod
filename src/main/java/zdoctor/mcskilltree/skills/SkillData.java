@@ -10,7 +10,7 @@ public class SkillData {
 
     private final Skill skill;
     protected List<ISkillProperty<?>> properties = new ArrayList<>();
-    protected Map<ISkillProperty<?>, ISkillProperty<?>> propertiesMap = new HashMap<>();
+    protected Map<String, ISkillProperty<?>> propertiesMap = new HashMap<>();
     private final ISkillHandler skillHandler;
 
 
@@ -33,11 +33,17 @@ public class SkillData {
     }
 
     public ISkillProperty<?> getProperty(ISkillProperty<?> key) {
-        if (propertiesMap.containsKey(key))
-            return propertiesMap.get(key);
+        if (propertiesMap.containsKey(key.getKey()))
+            return propertiesMap.get(key.getKey());
         ISkillProperty<?> property = key.copy();
-        propertiesMap.put(key, property);
+        propertiesMap.put(key.getKey(), property);
         return property;
+    }
+
+    public boolean match(ISkillProperty<?> key) {
+        if (!propertiesMap.containsKey(key.getKey()))
+            return false;
+        return propertiesMap.get(key.getKey()).getValue().equals(key.getValue());
     }
 
     public String getSkillName() {
@@ -56,5 +62,6 @@ public class SkillData {
             getProperty(property).from(nbt);
         }
     }
+
 
 }

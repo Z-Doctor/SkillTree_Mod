@@ -1,5 +1,7 @@
 package zdoctor.mcskilltree.api;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.minecraft.nbt.CompoundNBT;
 
 import java.util.function.Supplier;
@@ -19,4 +21,7 @@ public interface ISkillProperty<T> {
 
     ISkillProperty<T> copy();
 
+    JsonObject serialize();
+
+    ISkillProperty<?> deserialize(JsonElement element);
 }
