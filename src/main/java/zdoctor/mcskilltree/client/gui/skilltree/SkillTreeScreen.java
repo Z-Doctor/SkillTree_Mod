@@ -225,7 +225,7 @@ public class SkillTreeScreen extends Screen {
 
         // Draws Skill Tree Tooltip
         if (getSelected() != null)
-            this.font.drawString(I18n.format(getSelected().getDisplayInfo().getTitle()), (float) (guiLeft + 8), (float) (guiTop + 6), 4210752);
+            this.font.drawString(getSelected().getDisplayInfo().getTitle().getFormattedText(), (float) (guiLeft + 8), (float) (guiTop + 6), 4210752);
     }
 
     private void renderToolTips(int mouseX, int mouseY) {
@@ -243,7 +243,7 @@ public class SkillTreeScreen extends Screen {
             Optional<IGuiEventListener> listener = getEventListenerForPos(mouseX - guiLeft, mouseY - guiTop);
             if (listener.isPresent() && listener.get() instanceof ISkillTreeTabGui) {
                 if (listener.get() != getSelected())
-                    renderTooltip(((ISkillTreeTabGui) listener.get()).getDisplayInfo().getTitle(), mouseX, mouseY);
+                    renderTooltip(((ISkillTreeTabGui) listener.get()).getDisplayInfo().getTitle().getFormattedText(), mouseX, mouseY);
             }
         }
 

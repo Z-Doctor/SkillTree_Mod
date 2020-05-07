@@ -16,18 +16,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import net.minecraftforge.registries.ObjectHolder;
-import zdoctor.mcskilltree.McSkillTree;
 import zdoctor.mcskilltree.events.SkillWorkBenchEvent;
-import zdoctor.mcskilltree.skills.Skill;
 import zdoctor.mcskilltree.skills.variants.CraftSkill;
 
 import java.util.Optional;
 
-@ObjectHolder(McSkillTree.MODID)
 public class SkillWorkbenchContainer extends WorkbenchContainer {
-    public static final Skill CRAFTER_SKILL = null;
-
     protected final CraftingInventory craftMatrix;
     protected final CraftResultInventory craftResult;
     protected final IWorldPosCallable worldPos;
@@ -49,8 +43,6 @@ public class SkillWorkbenchContainer extends WorkbenchContainer {
     public boolean canInteractWith(PlayerEntity playerIn) {
         Event.Result result = super.canInteractWith(playerIn) ? Event.Result.ALLOW : Event.Result.DENY;
         SkillWorkBenchEvent.CanInteractCheckEvent event = new SkillWorkBenchEvent.CanInteractCheckEvent(result);
-//        if(SkillApi.hasSkill(playerIn, CRAFTER_SKILL))
-//            return ;
         return !MinecraftForge.EVENT_BUS.post(event) && event.getResult() != Event.Result.DENY;
     }
 

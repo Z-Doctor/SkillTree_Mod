@@ -7,8 +7,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import zdoctor.mcskilltree.skilltree.SkillFrameType;
 import zdoctor.mcskilltree.skilltree.Vector2;
 
@@ -33,6 +31,10 @@ public class SkillDisplayInfo {
 
     public SkillDisplayInfo(Skill skill, int x, int y) {
         this.skill = skill;
+        // TODO Add SkillTranslation Component that will handle add arguments such as level
+        title = new TranslationTextComponent(skill.getUnlocalizedName() + ".title", this);
+        description = new TranslationTextComponent(skill.getUnlocalizedName() + ".desc", this);
+
         position = new Vector2(x, y);
         offset = new Vector2();
         setIcon(Items.DIAMOND.getDefaultInstance());
@@ -59,14 +61,10 @@ public class SkillDisplayInfo {
     }
 
     public ITextComponent getTitle() {
-        if (title == null)
-            title = new TranslationTextComponent(skill.getRegistryName() + ".title", this);
         return title;
     }
 
     public ITextComponent getDescription() {
-        if (description == null)
-            description = new TranslationTextComponent(skill.getRegistryName() + ".desc", this);
         return description;
     }
 

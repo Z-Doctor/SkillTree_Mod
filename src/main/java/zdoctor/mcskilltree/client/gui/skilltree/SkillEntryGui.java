@@ -2,10 +2,16 @@ package zdoctor.mcskilltree.client.gui.skilltree;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.advancements.AdvancementState;
+import net.minecraft.resources.IReloadableResourceManager;
+import net.minecraft.resources.IResourceManager;
+import net.minecraft.resources.IResourceManagerReloadListener;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.resource.IResourceType;
+import net.minecraftforge.resource.ISelectiveResourceReloadListener;
+import net.minecraftforge.resource.VanillaResourceType;
 import zdoctor.mcskilltree.McSkillTree;
 import zdoctor.mcskilltree.api.ClientSkillApi;
 import zdoctor.mcskilltree.api.ISkillHandler;
@@ -18,11 +24,12 @@ import zdoctor.mcskilltree.world.storage.loot.conditions.HasSkill;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @OnlyIn(Dist.CLIENT)
-public class SkillEntryGui extends AbstractSkillTreeGui {
+public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveResourceReloadListener {
     public static final ResourceLocation WIDGETS = new ResourceLocation("textures/gui/advancements/widgets.png");
     public static final Pattern SENTENCE_PATTERN = Pattern.compile("(.+) \\S+");
 
@@ -43,11 +50,15 @@ public class SkillEntryGui extends AbstractSkillTreeGui {
     public SkillEntryGui(Skill skill) {
         this.skill = skill;
         this.displayInfo = skill.getDisplayInfo();
+        playerHandler = ClientSkillApi.getPlayerHandler();
+
+        localize();
+        ((IReloadableResourceManager) minecraft.getResourceManager()).addReloadListener(this);
+    }
+
+    public void localize() {
         this.title = minecraft.fontRenderer.trimStringToWidth(displayInfo.getTitle().getFormattedText(), 163);
         this.width = calculateWidth() + 3 + 5;
-
-        // TODO Add client side constant handler for player to SkillApi
-        playerHandler = SkillApi.getSkillHandler(Objects.requireNonNull(minecraft.player));
     }
 
     @Nullable
@@ -415,4 +426,12 @@ public class SkillEntryGui extends AbstractSkillTreeGui {
         }
         return scroll;
     }
+
+    @Override
+    public void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> resourcePredicate) {
+        if(resourcePredicate.test(VanillaResourceType.LANGUAGES)) {
+            localize();
+        }
+    }
+
 }

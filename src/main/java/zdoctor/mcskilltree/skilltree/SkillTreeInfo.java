@@ -2,6 +2,8 @@ package zdoctor.mcskilltree.skilltree;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.LogicalSide;
 import zdoctor.mcskilltree.client.gui.skilltree.SkillTreeTabType;
 
@@ -14,8 +16,8 @@ public class SkillTreeInfo {
     private int index;
     private SkillTreeTabType type;
 
-    private String title;
-    private String description;
+    private ITextComponent title;
+    private ITextComponent description;
     private ItemStack icon;
     private SkillTreeBackground background;
 
@@ -30,8 +32,8 @@ public class SkillTreeInfo {
     public SkillTreeInfo(int index, SkillTreeTabType type, ItemStack icon, String title, String description, @Nullable SkillTreeBackground background) {
         this.index = index;
         this.type = type;
-        this.title = title;
-        this.description = description;
+        this.title = new TranslationTextComponent(title);
+        this.description = new TranslationTextComponent(description);
         this.icon = icon;
         this.background = background;
     }
@@ -50,16 +52,16 @@ public class SkillTreeInfo {
         return this;
     }
 
-    public SkillTreeInfo setTitle(String title) {
+    public SkillTreeInfo setTitle(ITextComponent title) {
         this.title = title;
         return this;
     }
 
-    public String getTitle() {
+    public ITextComponent getTitle() {
         return this.title;
     }
 
-    public String getDescription() {
+    public ITextComponent getDescription() {
         return this.description;
     }
 
@@ -68,7 +70,7 @@ public class SkillTreeInfo {
         return this;
     }
 
-    public SkillTreeInfo setDescription(String description) {
+    public SkillTreeInfo setDescription(ITextComponent description) {
         this.description = description;
         return this;
     }

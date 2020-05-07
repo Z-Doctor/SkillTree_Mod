@@ -12,7 +12,6 @@ import net.minecraft.world.storage.loot.LootParameters;
 import net.minecraft.world.storage.loot.conditions.ILootCondition;
 import zdoctor.mcskilltree.McSkillTree;
 import zdoctor.mcskilltree.skills.criterion.SkillPredicate;
-import zdoctor.mcskilltree.world.storage.loot.SkillLootParameters;
 
 import java.util.Set;
 
@@ -25,7 +24,8 @@ public class HasSkill implements ILootCondition {
 
     @Override
     public Set<LootParameter<?>> getRequiredParameters() {
-        return ImmutableSet.of(LootParameters.THIS_ENTITY, SkillLootParameters.SKILL);
+        return ImmutableSet.of(LootParameters.THIS_ENTITY, LootParameters.KILLER_ENTITY,
+                LootParameters.DIRECT_KILLER_ENTITY, LootParameters.LAST_DAMAGE_PLAYER);
     }
 
     public static ILootCondition.IBuilder builder(SkillPredicate predicate) {
@@ -34,7 +34,7 @@ public class HasSkill implements ILootCondition {
 
     @Override
     public boolean test(LootContext lootContext) {
-        LivingEntity entity = (LivingEntity) lootContext.get(LootParameters.KILLER_ENTITY);
+        LivingEntity entity = (LivingEntity) lootContext.get(predicate.getSource());
         return entity != null && predicate.test(entity);
     }
 
@@ -56,4 +56,6 @@ public class HasSkill implements ILootCondition {
             return new HasSkill(predicate);
         }
     }
+
+
 }

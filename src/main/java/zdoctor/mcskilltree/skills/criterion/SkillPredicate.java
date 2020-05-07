@@ -1,26 +1,21 @@
 package zdoctor.mcskilltree.skills.criterion;
 
-import com.google.gson.*;
-import net.minecraft.advancements.criterion.EnchantmentPredicate;
-import net.minecraft.advancements.criterion.ItemPredicate;
-import net.minecraft.advancements.criterion.MinMaxBounds;
-import net.minecraft.advancements.criterion.NBTPredicate;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.potion.Potion;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.Tag;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.storage.loot.LootParameter;
 import zdoctor.mcskilltree.api.ISkillHandler;
 import zdoctor.mcskilltree.api.ISkillProperty;
 import zdoctor.mcskilltree.api.SkillApi;
 import zdoctor.mcskilltree.registries.SkillTreeRegistries;
 import zdoctor.mcskilltree.skills.Skill;
 import zdoctor.mcskilltree.skills.SkillData;
-import zdoctor.mcskilltree.skills.SkillProperty;
-import zdoctor.mcskilltree.skilltree.SkillTree;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,16 +25,22 @@ public class SkillPredicate {
     public static final SkillPredicate ANY = new SkillPredicate();
 
     private final Skill skill;
+    private final LootContext.EntityTarget source;
     private final ISkillProperty<?>[] properties;
 
     public SkillPredicate() {
         skill = null;
+        source = null;
         properties = null;
     }
 
+    public LootParameter<? extends Entity> getSource() {
+        return source != null ? source.getParameter() : null;
+    }
 
-    public SkillPredicate(Skill skill, ISkillProperty<?>[] properties) {
+    public SkillPredicate(Skill skill, LootContext.EntityTarget source, ISkillProperty<?>[] properties) {
         this.skill = skill;
+        this.source = source;
         this.properties = properties;
     }
 
@@ -72,8 +73,10 @@ public class SkillPredicate {
             if (skill == null)
                 return ANY;
 
+            LootContext.EntityTarget source = LootContext.EntityTarget.fromString(jsonObject.get("entity").getAsString());
+
             if (!jsonObject.has("properties"))
-                return new SkillPredicate(skill, null);
+                return new SkillPredicate(skill, source, null);
 
             List<ISkillProperty<?>> skillProperties = new ArrayList<>();
             skill.getProperties(skillProperties);
@@ -98,7 +101,7 @@ public class SkillPredicate {
                 }
             }
 
-            return new SkillPredicate(skill, propertyList.toArray(new ISkillProperty<?>[0]));
+            return new SkillPredicate(skill, source, propertyList.toArray(new ISkillProperty<?>[0]));
         } else {
             return ANY;
         }
@@ -111,6 +114,10 @@ public class SkillPredicate {
             JsonObject jsonobject = new JsonObject();
             if (skill != null) {
                 jsonobject.addProperty("skill", Objects.requireNonNull(skill.getRegistryName()).toString());
+            }
+
+            if (source != null) {
+                jsonobject.addProperty("entity", source.toString());
             }
 
             if (properties == null)
