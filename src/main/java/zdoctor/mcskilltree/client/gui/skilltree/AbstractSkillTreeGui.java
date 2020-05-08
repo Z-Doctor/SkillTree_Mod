@@ -7,14 +7,13 @@ import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import zdoctor.mcskilltree.client.gui.skills.SkillEntryGui;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class AbstractSkillTreeGui extends FocusableGui {
-    public static final Minecraft minecraft = Minecraft.getInstance();
+    public Minecraft minecraft = Minecraft.getInstance();
     protected final List<SkillEntryGui> children = Lists.newArrayList();
 
     @Override
@@ -65,4 +64,5 @@ public abstract class AbstractSkillTreeGui extends FocusableGui {
         // To prevent recursion when focused is itself and a mouse is dragged
         return this.getFocused() != this && super.mouseDragged(mouseX, mouseY, button, scaledX, scaledY);
     }
+
 }

@@ -23,7 +23,7 @@ import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import zdoctor.mcskilltree.client.gui.skilltree.ISkillTreeTabGui;
+import zdoctor.mcskilltree.api.ISkillTreeTabGui;
 import zdoctor.mcskilltree.client.gui.skilltree.SkillTreeTabGui;
 import zdoctor.mcskilltree.client.gui.skilltree.SkillTreeTabType;
 import zdoctor.mcskilltree.skilltree.SkillTree;
@@ -145,7 +145,7 @@ public class PlayerInfoTab extends SkillTree {
         }
 
         @Override
-        public void drawImages(int x, int y, int mouseX, int mouseY) {
+        public void preDrawSkills(int x, int y, int mouseX, int mouseY) {
             minecraft.textureManager.bindTexture(SkillTreeBackground.WINDOW);
             draw2DTex(x, y, 179f, 140f, 51, 72, 256, 256);
             drawPlayerHealthAndArmor(x, y + 73);

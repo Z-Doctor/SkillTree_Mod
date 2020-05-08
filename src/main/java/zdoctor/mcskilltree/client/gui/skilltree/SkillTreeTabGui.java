@@ -1,16 +1,22 @@
 package zdoctor.mcskilltree.client.gui.skilltree;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.Mod;
+import zdoctor.mcskilltree.api.ISkillInfoGui;
+import zdoctor.mcskilltree.api.ISkillTreeTabGui;
 import zdoctor.mcskilltree.api.SkillApi;
+import zdoctor.mcskilltree.client.gui.skills.SkillEntryGui;
 import zdoctor.mcskilltree.skills.Skill;
 import zdoctor.mcskilltree.skilltree.SkillTree;
 import zdoctor.mcskilltree.skilltree.SkillTreeInfo;
+
+import javax.annotation.Nullable;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
@@ -29,6 +35,7 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
     protected int topScroll;
     protected int rightScroll;
     protected int botScroll;
+    protected ISkillInfoGui selected;
 
     public SkillTreeTabGui(SkillTree skillTree) {
         this.skillTree = skillTree;
@@ -152,6 +159,11 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
     }
 
     @Override
+    public void preDrawContents(int guiLeft, int guiTop, int mouseX, int mouseY) {
+
+    }
+
+    @Override
     public void drawContents(int guiLeft, int guiTop, int mouseX, int mouseY) {
         RenderSystem.pushMatrix();
         RenderSystem.enableDepthTest();
@@ -163,7 +175,6 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
         RenderSystem.depthFunc(518);
         fill(234, 113, 0, 0, -16777216);
         RenderSystem.depthFunc(515);
-        // TODO Add way to scroll screen with drag mouse
         int scrollX = MathHelper.floor(this.scrollX);
         int scrollY = MathHelper.floor(this.scrollY);
         int x = scrollX % 16;
@@ -180,10 +191,12 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
             display.getBackground().render(minecraft, scrollX, scrollY);
         }
 
-        this.drawImages(scrollX, scrollY, mouseX, mouseY);
+        this.preDrawSkills(scrollX, scrollY, mouseX, mouseY);
         this.drawSkillConnections(scrollX, scrollY, true);
         this.drawSkillConnections(scrollX, scrollY, false);
         this.drawSkills(scrollX, scrollY);
+        this.postDrawSkills(scrollX, scrollY, mouseX, mouseY);
+
 
         RenderSystem.depthFunc(518);
         RenderSystem.translatef(0.0F, 0.0F, -950.0F);
@@ -193,7 +206,29 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
         RenderSystem.translatef(0.0F, 0.0F, 950.0F);
         RenderSystem.depthFunc(515);
         RenderSystem.popMatrix();
+    }
 
+    @Override
+    public void postDrawContents(int guiLeft, int guiTop, int mouseX, int mouseY) {
+    }
+
+    @Override
+    public void setFocused(@Nullable IGuiEventListener focused) {
+        SkillEntryGui selected = (SkillEntryGui) focused;
+        if (this.selected != null) {
+            if (this.selected.getSkillEntry() == selected)
+                return;
+            else
+                this.selected.onClose();
+        }
+
+        this.selected = selected != null ? selected.getSkillInfoGui() : null;
+    }
+
+    @Nullable
+    @Override
+    public ISkillInfoGui getFocused() {
+        return this.selected;
     }
 
     public void drawSkillConnections(int left, int top, boolean outerLine) {
@@ -202,12 +237,13 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
         }
     }
 
-    public void drawImages(int posX, int posY, int mouseX, int mouseY) {
-        // TODO Do I need this?
+    public void preDrawSkills(int posX, int posY, int mouseX, int mouseY) {
+    }
+
+    public void postDrawSkills(int posX, int posY, int mouseX, int mouseY) {
     }
 
     public void drawSkills(int left, int top) {
-        // TODO Add locked icon
         for (SkillEntryGui child : children()) {
             child.draw(left, top, SkillApi.hasSkill(minecraft.player, child.getSkill()));
             child.drawChildren(left, top);
@@ -215,24 +251,30 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
     }
 
     @Override
-    public void drawToolTips(int mouseX, int mouseY) {
+    public void drawMisc(int guiLeft, int guiTop, int mouseX, int mouseY) {
+
         RenderSystem.pushMatrix();
         RenderSystem.translatef(0.0F, 0.0F, 200.0F);
         RenderSystem.disableDepthTest();
         fill(0, 0, 234, 113, MathHelper.floor(this.fade * 255.0F) << 24);
 
-        boolean flag = false;
+        boolean flag = getFocused() != null;
+        if (flag)
+            drawSkillInfo(guiLeft, guiTop, mouseX, mouseY);
+
         int scrollX = MathHelper.floor(this.scrollX);
         int scrollY = MathHelper.floor(this.scrollY);
-        if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
-            for (SkillEntryGui child : children()) {
-                if (child.isMouseOver(mouseX - scrollX, mouseY - scrollY)) {
-                    flag = true;
-                    child.drawHovered(scrollX, scrollY, this.fade, mouseX + scrollX, mouseY + scrollY);
-                    break;
+
+        if (!flag)
+            if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
+                for (SkillEntryGui child : children()) {
+                    if (child.isMouseOver(mouseX - scrollX, mouseY - scrollY)) {
+                        flag = true;
+                        child.drawHovered(scrollX, scrollY, this.fade, mouseX + scrollX, mouseY + scrollY);
+                        break;
+                    }
                 }
             }
-        }
 
         RenderSystem.popMatrix();
         if (flag) {
@@ -241,6 +283,12 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
             this.fade = MathHelper.clamp(this.fade - 0.04F, 0.0F, 1.0F);
         }
 
+    }
+
+    protected void drawSkillInfo(int guiLeft, int guiTop, int mouseX, int mouseY) {
+        if (getFocused() == null)
+            return;
+        getFocused().draw(guiLeft, guiTop, mouseX, mouseY);
     }
 
     @Override
@@ -259,11 +307,29 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
 
         mouseX -= 9;
         mouseY -= 18;
+        // TODO Clean up this
         if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
-            return super.mouseClicked(mouseX - scrollX, mouseY - scrollY, button);
+            if (super.mouseClicked(mouseX - scrollX, mouseY - scrollY, button)) {
+                return true;
+            }
+            setFocused(null);
+        } else if (getFocused() != null) {
+            if (!getFocused().withinBounds(mouseX, mouseY))
+                setFocused(null);
+            else
+                getFocused().mouseClicked(mouseX, mouseY, button);
         }
         return false;
     }
 
+    @Override
+    public void onOpen() {
+        setActive(true);
+    }
 
+    @Override
+    public void onClose() {
+        setActive(false);
+        fade = 0;
+    }
 }

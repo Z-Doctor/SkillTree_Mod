@@ -3,7 +3,6 @@ package zdoctor.mcskilltree.client.gui.skilltree;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.MouseHelper;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.chat.NarratorChatListener;
 import net.minecraft.client.gui.screen.Screen;
@@ -12,6 +11,7 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import zdoctor.mcskilltree.api.ISkillTreeTabGui;
 import zdoctor.mcskilltree.client.KeyBindingHandler;
 import zdoctor.mcskilltree.registries.SkillTreeRegistries;
 import zdoctor.mcskilltree.skilltree.SkillTree;
@@ -23,10 +23,10 @@ import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
 public class SkillTreeScreen extends Screen {
-    private final Map<SkillTree, ISkillTreeTabGui> tabs = Maps.newLinkedHashMap();
-    private static ISkillTreeTabGui lastSelected;
-    private ISkillTreeTabGui selected;
-    private static int tabPage, maxPages;
+    protected final Map<SkillTree, ISkillTreeTabGui> tabs = Maps.newLinkedHashMap();
+    protected ISkillTreeTabGui lastSelected;
+    protected ISkillTreeTabGui selected;
+    protected int tabPage, maxPages;
     protected Minecraft minecraft;
 
     protected int guiLeft;
@@ -66,7 +66,7 @@ public class SkillTreeScreen extends Screen {
                     super.render(p_render_1_, p_render_2_, p_render_3_);
                 }
             });
-            addButton(new Button(guiLeft + 252 - 20, guiTop - 50, 20, 20, ">", b -> tabPage = Math.min(tabPage + 1, maxPages)) {
+            addButton(new Button(guiLeft + xSize - 20, guiTop - 50, 20, 20, ">", b -> tabPage = Math.min(tabPage + 1, maxPages)) {
                 @Override
                 public void render(int p_render_1_, int p_render_2_, float p_render_3_) {
                     visible = tabPage < maxPages;
@@ -97,13 +97,14 @@ public class SkillTreeScreen extends Screen {
     @Override
     public void setFocused(@Nullable IGuiEventListener focused) {
         super.setFocused(focused);
-        if (this.selected != null && focused != this.selected)
-            this.selected.setActive(false);
+        if (this.selected != null && focused != this.selected) {
+            this.selected.onClose();
+        }
         this.selected = (ISkillTreeTabGui) focused;
         if (this.selected != null) {
             lastSelected = this.selected;
             tabPage = selected.getPage();
-            this.selected.setActive(true);
+            this.selected.onOpen();
         }
     }
 
@@ -123,17 +124,18 @@ public class SkillTreeScreen extends Screen {
 
     @Override
     public void render(int mouseX, int mouseY, float partialTicks) {
+        // TODO Clean up
         this.renderBackground();
         this.renderInside(mouseX, mouseY, guiLeft, guiTop);
         if (maxPages > 0) {
             String page = String.format("%d / %d", tabPage + 1, maxPages + 1);
             int width = this.font.getStringWidth(page);
             RenderSystem.disableLighting();
-            this.font.drawStringWithShadow(page, guiLeft + (252 / 2f) - (width / 2f), guiTop - 44, -1);
+            this.font.drawStringWithShadow(page, guiLeft + (xSize / 2f) - (width / 2f), guiTop - 44, -1);
         }
 
         this.renderWindow(guiLeft, guiTop);
-        this.renderToolTips(mouseX, mouseY);
+        this.renderMisc(mouseX, mouseY);
         super.render(mouseX, mouseY, partialTicks);
     }
 
@@ -183,7 +185,7 @@ public class SkillTreeScreen extends Screen {
         getSelected().mouseMoved(mouseX, mouseY);
     }
 
-    private void renderInside(int mouseX, int mouseY, int guiLeft, int guiTop) {
+    protected void renderInside(int mouseX, int mouseY, int guiLeft, int guiTop) {
         if (getSelected() == null) {
             fill(guiLeft + 9, guiTop + 18, guiLeft + 9 + 234, guiTop + 18 + 113, -16777216);
             String s = I18n.format("skilltree.empty");
@@ -192,9 +194,11 @@ public class SkillTreeScreen extends Screen {
             this.font.drawString(":(", (float) (guiLeft + 9 + 117 - this.font.getStringWidth(":(") / 2), (float) (guiTop + 18 + 113 - 9), -1);
         } else {
             RenderSystem.pushMatrix();
+            getSelected().preDrawContents(guiLeft, guiTop, mouseX, mouseY);
             RenderSystem.translatef((float) (guiLeft + 9), (float) (guiTop + 18), 0.0F);
             getSelected().drawContents(guiLeft, guiTop, mouseX, mouseY);
             RenderSystem.popMatrix();
+            getSelected().postDrawContents(guiLeft, guiTop, mouseX, mouseY);
             RenderSystem.depthFunc(515);
             RenderSystem.disableDepthTest();
         }
@@ -204,7 +208,7 @@ public class SkillTreeScreen extends Screen {
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.enableBlend();
         this.minecraft.getTextureManager().bindTexture(SkillTreeBackground.WINDOW);
-        this.blit(guiLeft, guiTop, 0, 0, 252, 140);
+        this.blit(guiLeft, guiTop, 0, 0, xSize, ySize);
         this.minecraft.getTextureManager().bindTexture(SkillTreeBackground.TABS);
 
         for (ISkillTreeTabGui tabGui : tabs.values()) {
@@ -228,13 +232,13 @@ public class SkillTreeScreen extends Screen {
             this.font.drawString(getSelected().getDisplayInfo().getTitle().getFormattedText(), (float) (guiLeft + 8), (float) (guiTop + 6), 4210752);
     }
 
-    private void renderToolTips(int mouseX, int mouseY) {
+    protected void renderMisc(int mouseX, int mouseY) {
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         if (getSelected() != null) {
             RenderSystem.pushMatrix();
             RenderSystem.enableDepthTest();
             RenderSystem.translatef((float) (guiLeft + 9), (float) (guiTop + 18), 400.0F);
-            getSelected().drawToolTips(mouseX - guiLeft - 9, mouseY - guiTop - 18);
+            getSelected().drawMisc(guiLeft, guiTop, mouseX - guiLeft - 9, mouseY - guiTop - 18);
             RenderSystem.disableDepthTest();
             RenderSystem.popMatrix();
         }

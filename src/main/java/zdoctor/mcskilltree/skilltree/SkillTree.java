@@ -9,7 +9,7 @@ import net.minecraftforge.registries.ForgeRegistryEntry;
 import net.minecraftforge.registries.ObjectHolder;
 import org.antlr.v4.runtime.misc.OrderedHashSet;
 import zdoctor.mcskilltree.McSkillTree;
-import zdoctor.mcskilltree.client.gui.skilltree.ISkillTreeTabGui;
+import zdoctor.mcskilltree.api.ISkillTreeTabGui;
 import zdoctor.mcskilltree.client.gui.skilltree.SkillTreeTabGui;
 import zdoctor.mcskilltree.client.gui.skilltree.SkillTreeTabType;
 import zdoctor.mcskilltree.skills.Skill;

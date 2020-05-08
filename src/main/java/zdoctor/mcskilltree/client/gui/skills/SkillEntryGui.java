@@ -1,10 +1,9 @@
-package zdoctor.mcskilltree.client.gui.skilltree;
+package zdoctor.mcskilltree.client.gui.skills;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.advancements.AdvancementState;
 import net.minecraft.resources.IReloadableResourceManager;
 import net.minecraft.resources.IResourceManager;
-import net.minecraft.resources.IResourceManagerReloadListener;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,12 +14,13 @@ import net.minecraftforge.resource.VanillaResourceType;
 import zdoctor.mcskilltree.McSkillTree;
 import zdoctor.mcskilltree.api.ClientSkillApi;
 import zdoctor.mcskilltree.api.ISkillHandler;
+import zdoctor.mcskilltree.api.ISkillInfoGui;
 import zdoctor.mcskilltree.api.SkillApi;
+import zdoctor.mcskilltree.client.gui.skilltree.AbstractSkillTreeGui;
 import zdoctor.mcskilltree.skills.Skill;
 import zdoctor.mcskilltree.skills.SkillDisplayInfo;
 import zdoctor.mcskilltree.skilltree.SkillTreeBackground;
 import zdoctor.mcskilltree.skilltree.Vector2;
-import zdoctor.mcskilltree.world.storage.loot.conditions.HasSkill;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -134,18 +134,25 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
     }
 
     public void draw(int left, int top, boolean hasSkill) {
-        // TODO Break down and modularize steps in drawing skill more
         // TODO Create TierSkillEntryGui to display numbers over tiered skills
         //  and automate them for skills that implement @ISkillTier
         if (getSkill().isHidden())
             return;
         int x = getX() + 3 + left;
         int y = getY() + 3 + top;
+        preDraw(left, top, x, y, hasSkill);
         getDisplayInfo().getFrame().drawFrame(minecraft, x, y, hasSkill);
         minecraft.getItemRenderer().renderItemAndEffectIntoGUI(null, skill.getIcon(), x + 5, y + 5);
+        postDraw(left, top, x, y, hasSkill);
+    }
+
+    protected void preDraw(int left, int top, int x, int y, boolean hasSkill) {
+
+    }
+
+    protected void postDraw(int left, int top, int x, int y, boolean hasSkill) {
         if (!hasSkill)
             drawLock(x, y);
-
     }
 
     public void drawLock(int left, int top) {
@@ -252,14 +259,14 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
         if (button != 0)
             return false;
 
-        if (isMouseOver(mouseX, mouseY)) {
+//        if (isMouseOver(mouseX, mouseY)) {
             // TODO Instead of buying, instead open up new window that displays information about
             //  the skill, description and cost
-            McSkillTree.LOGGER.debug("Buying skill: " + getFocusedSkill());
-            SkillApi.buySkill(minecraft.player, getFocusedSkill());
-            return true;
-        }
-        return false;
+//            McSkillTree.LOGGER.debug("Buying skill: " + getFocusedSkill());
+//            SkillApi.buySkill(minecraft.player, getFocusedSkill());
+//            return true;
+//        }
+        return isMouseOver(mouseX, mouseY);
     }
 
     @Override
@@ -439,4 +446,8 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
         }
     }
 
+    public ISkillInfoGui getSkillInfoGui() {
+        // Should this be saved to a variable?
+        return new SkillInfoGui(this);
+    }
 }

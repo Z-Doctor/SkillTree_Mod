@@ -72,7 +72,7 @@ task deobfJar(type: Jar, dependsOn: 'jar') {
 task sourceJar(type: Jar, dependsOn: 'jar') {
     from "src/main/java"
     from "src/main/resources"
-    classifier "source"
+    classifier "sources"
 }
 
 artifacts {
