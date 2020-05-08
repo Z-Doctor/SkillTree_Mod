@@ -51,6 +51,8 @@ public class PlayerInfoTab extends SkillTree {
 
     @OnlyIn(Dist.CLIENT)
     public static class PlayerInfoTabGui extends SkillTreeTabGui {
+        // TODO Add a way to register ITextComponents to be rendered
+        // TODO Register one for player skill points
         protected long healthUpdateCounter;
         protected int ticks;
         protected int playerHealth;

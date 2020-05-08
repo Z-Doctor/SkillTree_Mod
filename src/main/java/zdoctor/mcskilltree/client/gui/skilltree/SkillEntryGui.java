@@ -134,6 +134,9 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
     }
 
     public void draw(int left, int top, boolean hasSkill) {
+        // TODO Break down and modularize steps in drawing skill more
+        // TODO Create TierSkillEntryGui to display numbers over tiered skills
+        //  and automate them for skills that implement @ISkillTier
         if (getSkill().isHidden())
             return;
         int x = getX() + 3 + left;
@@ -250,6 +253,8 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
             return false;
 
         if (isMouseOver(mouseX, mouseY)) {
+            // TODO Instead of buying, instead open up new window that displays information about
+            //  the skill, description and cost
             McSkillTree.LOGGER.debug("Buying skill: " + getFocusedSkill());
             SkillApi.buySkill(minecraft.player, getFocusedSkill());
             return true;

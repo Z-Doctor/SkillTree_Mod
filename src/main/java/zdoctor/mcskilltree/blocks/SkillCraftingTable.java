@@ -1,4 +1,4 @@
-package zdoctor.mcskilltree;
+package zdoctor.mcskilltree.blocks;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;

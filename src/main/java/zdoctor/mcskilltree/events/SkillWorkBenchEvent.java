@@ -11,7 +11,7 @@ import net.minecraftforge.eventbus.api.Event;
 @Cancelable
 public abstract class SkillWorkBenchEvent extends Event {
 
-    public static class OverrideVanillaWorkbenchEvent extends SkillWorkBenchEvent {
+    public static class OverrideVanillaEvent extends SkillWorkBenchEvent {
 
     }
 
