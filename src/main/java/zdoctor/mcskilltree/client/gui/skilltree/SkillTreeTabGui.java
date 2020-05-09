@@ -265,16 +265,17 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
         int scrollX = MathHelper.floor(this.scrollX);
         int scrollY = MathHelper.floor(this.scrollY);
 
-        if (!flag)
-            if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
-                for (SkillEntryGui child : children()) {
-                    if (child.isMouseOver(mouseX - scrollX, mouseY - scrollY)) {
-                        flag = true;
-                        child.drawHovered(scrollX, scrollY, this.fade, mouseX + scrollX, mouseY + scrollY);
-                        break;
-                    }
+        if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
+            for (SkillEntryGui child : children()) {
+                if(getFocused() != null && child == getFocused().getSkillEntry())
+                    continue;
+                if (child.isMouseOver(mouseX - scrollX, mouseY - scrollY)) {
+                    flag = true;
+                    child.drawHovered(scrollX, scrollY, this.fade, mouseX + scrollX, mouseY + scrollY);
+                    break;
                 }
             }
+        }
 
         RenderSystem.popMatrix();
         if (flag) {

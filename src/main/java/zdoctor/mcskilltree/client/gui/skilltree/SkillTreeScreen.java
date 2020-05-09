@@ -24,7 +24,7 @@ import java.util.Optional;
 @OnlyIn(Dist.CLIENT)
 public class SkillTreeScreen extends Screen {
     protected final Map<SkillTree, ISkillTreeTabGui> tabs = Maps.newLinkedHashMap();
-    protected ISkillTreeTabGui lastSelected;
+    protected static ISkillTreeTabGui lastSelected;
     protected ISkillTreeTabGui selected;
     protected int tabPage, maxPages;
     protected Minecraft minecraft;

@@ -11,7 +11,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.resource.IResourceType;
 import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.resource.VanillaResourceType;
-import zdoctor.mcskilltree.McSkillTree;
 import zdoctor.mcskilltree.api.ClientSkillApi;
 import zdoctor.mcskilltree.api.ISkillHandler;
 import zdoctor.mcskilltree.api.ISkillInfoGui;
