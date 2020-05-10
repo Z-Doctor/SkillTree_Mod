@@ -7,9 +7,10 @@ public interface ISkillInfoGui extends IGuiEventListener {
 
     boolean withinBounds(double mouseX, double mouseY);
 
-    void draw(int guiLeft, int guiTop, int mouseX, int mouseY);
+    void render(int mouseX, int mouseY, float partialTicks);
 
     SkillEntryGui getSkillEntry();
 
     void onClose();
+
 }

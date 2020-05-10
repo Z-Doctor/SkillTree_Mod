@@ -11,10 +11,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.resource.IResourceType;
 import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 import net.minecraftforge.resource.VanillaResourceType;
-import zdoctor.mcskilltree.api.ClientSkillApi;
-import zdoctor.mcskilltree.api.ISkillHandler;
-import zdoctor.mcskilltree.api.ISkillInfoGui;
-import zdoctor.mcskilltree.api.SkillApi;
+import zdoctor.mcskilltree.api.*;
 import zdoctor.mcskilltree.client.gui.skilltree.AbstractSkillTreeGui;
 import zdoctor.mcskilltree.skills.Skill;
 import zdoctor.mcskilltree.skills.SkillDisplayInfo;
@@ -32,6 +29,7 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
     public static final ResourceLocation WIDGETS = new ResourceLocation("textures/gui/advancements/widgets.png");
     public static final Pattern SENTENCE_PATTERN = Pattern.compile("(.+) \\S+");
 
+    private final ISkillTreeTabGui tab;
     private final Skill skill;
     protected SkillDisplayInfo displayInfo;
 
@@ -46,7 +44,8 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
 
     protected Set<SkillEntryGui> parents;
 
-    public SkillEntryGui(Skill skill) {
+    public SkillEntryGui(ISkillTreeTabGui tab, Skill skill) {
+        this.tab = tab;
         this.skill = skill;
         this.displayInfo = skill.getDisplayInfo();
         playerHandler = ClientSkillApi.getPlayerHandler();
@@ -58,6 +57,10 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
     public void localize() {
         this.title = minecraft.fontRenderer.trimStringToWidth(displayInfo.getTitle().getFormattedText(), 163);
         this.width = calculateWidth() + 3 + 5;
+    }
+
+    public ISkillTreeTabGui getTab() {
+        return tab;
     }
 
     @Nullable
@@ -145,6 +148,14 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
         postDraw(left, top, x, y, hasSkill);
     }
 
+    public void drawAt(int left, int top, boolean hasSkill, boolean withLock) {
+        getDisplayInfo().getFrame().drawFrame(minecraft, left, top, hasSkill);
+        minecraft.getItemRenderer().renderItemAndEffectIntoGUI(null, skill.getIcon(), left + 5, top + 5);
+
+        if(withLock)
+            drawLock(left, top);
+    }
+
     protected void preDraw(int left, int top, int x, int y, boolean hasSkill) {
 
     }
@@ -155,12 +166,13 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
     }
 
     public void drawLock(int left, int top) {
+        RenderSystem.pushMatrix();
+        RenderSystem.translatef(0, 0, 400);
         fill(left, top, left + 26, top + 26, 0xCC505050);
         minecraft.getTextureManager().bindTexture(SkillTreeBackground.WINDOW);
-        RenderSystem.disableDepthTest();
         draw2DTex(left + 4, top + 4, ClientSkillApi.hasRequirements(getSkill()) ? 18 : 0, 176,
                 18, 18);
-        RenderSystem.enableDepthTest();
+        RenderSystem.popMatrix();
     }
 
     public void drawChildren(int left, int top) {
@@ -258,13 +270,8 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
         if (button != 0)
             return false;
 
-//        if (isMouseOver(mouseX, mouseY)) {
             // TODO Instead of buying, instead open up new window that displays information about
             //  the skill, description and cost
-//            McSkillTree.LOGGER.debug("Buying skill: " + getFocusedSkill());
-//            SkillApi.buySkill(minecraft.player, getFocusedSkill());
-//            return true;
-//        }
         return isMouseOver(mouseX, mouseY);
     }
 
@@ -399,7 +406,7 @@ public class SkillEntryGui extends AbstractSkillTreeGui implements ISelectiveRes
 
     public void findChildren() {
         for (Skill child : skill.getChildren()) {
-            SkillEntryGui entry = new SkillEntryGui(child);
+            SkillEntryGui entry = new SkillEntryGui(getTab(), child);
             children.add(entry);
             entry.addParent(this);
             entry.findChildren();

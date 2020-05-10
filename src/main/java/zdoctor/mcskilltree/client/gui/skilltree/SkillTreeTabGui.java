@@ -31,6 +31,9 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
 
     protected boolean active;
 
+    protected int lastMouseX, lastMouseY;
+    protected int lastAdjustedMouseX, lastAdjustedMouseY;
+
     protected int leftScroll;
     protected int topScroll;
     protected int rightScroll;
@@ -78,10 +81,20 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
         buildTree();
     }
 
+    @Override
+    public double getScrollX() {
+        return scrollX;
+    }
+
+    @Override
+    public double getScrollY() {
+        return scrollY;
+    }
+
     protected void generateSkillEntries(SkillTree skillTree) {
         for (Skill skill : skillTree.getSkills()) {
             if (!skill.hasParents()) {
-                SkillEntryGui parent = new SkillEntryGui(skill);
+                SkillEntryGui parent = new SkillEntryGui(this, skill);
                 children.add(parent);
                 parent.findChildren();
             }
@@ -154,17 +167,13 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
     }
 
     @Override
-    public void drawIcon(int guiLeft, int guiTop, ItemRenderer renderItemIn) {
-        display.getType().drawIcon(guiLeft, guiTop, display.getIndex(), renderItemIn, display != null ? display.getIcon() : null);
+    public void drawIcon(int offsetX, int offsetY, ItemRenderer renderItemIn) {
+        display.getType().drawIcon(offsetX, offsetY, display.getIndex(), renderItemIn, display != null ? display.getIcon() : null);
     }
 
     @Override
-    public void preDrawContents(int guiLeft, int guiTop, int mouseX, int mouseY) {
-
-    }
-
-    @Override
-    public void drawContents(int guiLeft, int guiTop, int mouseX, int mouseY) {
+    public void render(int mouseX, int mouseY, float partialTicks) {
+        // TODO Figure out how this masking works
         RenderSystem.pushMatrix();
         RenderSystem.enableDepthTest();
         RenderSystem.translatef(0.0F, 0.0F, 950.0F);
@@ -206,10 +215,9 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
         RenderSystem.translatef(0.0F, 0.0F, 950.0F);
         RenderSystem.depthFunc(515);
         RenderSystem.popMatrix();
-    }
 
-    @Override
-    public void postDrawContents(int guiLeft, int guiTop, int mouseX, int mouseY) {
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
     }
 
     @Override
@@ -231,6 +239,7 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
         return this.selected;
     }
 
+    // TODO make sure it is working
     public void drawSkillConnections(int left, int top, boolean outerLine) {
         for (SkillEntryGui child : children()) {
             child.drawConnectivity(left, top, outerLine);
@@ -251,8 +260,7 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
     }
 
     @Override
-    public void drawMisc(int guiLeft, int guiTop, int mouseX, int mouseY) {
-
+    public void renderAdjusted(int mouseX, int mouseY, float partialTicks) {
         RenderSystem.pushMatrix();
         RenderSystem.translatef(0.0F, 0.0F, 200.0F);
         RenderSystem.disableDepthTest();
@@ -260,22 +268,23 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
 
         boolean flag = getFocused() != null;
         if (flag)
-            drawSkillInfo(guiLeft, guiTop, mouseX, mouseY);
+            drawSkillInfo(mouseX, mouseY, partialTicks);
 
         int scrollX = MathHelper.floor(this.scrollX);
         int scrollY = MathHelper.floor(this.scrollY);
-
-        if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
-            for (SkillEntryGui child : children()) {
-                if(getFocused() != null && child == getFocused().getSkillEntry())
-                    continue;
-                if (child.isMouseOver(mouseX - scrollX, mouseY - scrollY)) {
-                    flag = true;
-                    child.drawHovered(scrollX, scrollY, this.fade, mouseX + scrollX, mouseY + scrollY);
-                    break;
+        // TODO See if needs cleanup or to be moved
+        if (getFocused() == null || !getFocused().withinBounds(mouseX, mouseY))
+            if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
+                for (SkillEntryGui child : children()) {
+                    if (getFocused() != null && child == getFocused().getSkillEntry())
+                        continue;
+                    if (child.isMouseOver(mouseX - scrollX, mouseY - scrollY)) {
+                        flag = true;
+                        child.drawHovered(scrollX, scrollY, this.fade, mouseX + scrollX, mouseY + scrollY);
+                        break;
+                    }
                 }
             }
-        }
 
         RenderSystem.popMatrix();
         if (flag) {
@@ -284,12 +293,15 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
             this.fade = MathHelper.clamp(this.fade - 0.04F, 0.0F, 1.0F);
         }
 
+        lastAdjustedMouseX = mouseX;
+        lastAdjustedMouseY = mouseY;
     }
 
-    protected void drawSkillInfo(int guiLeft, int guiTop, int mouseX, int mouseY) {
+
+    protected void drawSkillInfo(int mouseX, int mouseY, float partialTicks) {
         if (getFocused() == null)
             return;
-        getFocused().draw(guiLeft, guiTop, mouseX, mouseY);
+        getFocused().render(mouseX, mouseY, partialTicks);
     }
 
     @Override
@@ -309,17 +321,18 @@ public class SkillTreeTabGui extends AbstractSkillTreeGui implements ISkillTreeT
         mouseX -= 9;
         mouseY -= 18;
         // TODO Clean up this
-        if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
+        if(button == 1)
+            setFocused(null);
+
+        if (getFocused() != null && getFocused().withinBounds(mouseX, mouseY)) {
+            getFocused().mouseClicked(mouseX, mouseY, button);
+            return true;
+        } else if (mouseX > 0 && mouseX < 234 && mouseY > 0 && mouseY < 113) {
             if (super.mouseClicked(mouseX - scrollX, mouseY - scrollY, button)) {
                 return true;
             }
+        } else
             setFocused(null);
-        } else if (getFocused() != null) {
-            if (!getFocused().withinBounds(mouseX, mouseY))
-                setFocused(null);
-            else
-                getFocused().mouseClicked(mouseX, mouseY, button);
-        }
         return false;
     }
 

@@ -27,7 +27,6 @@ public class SkillTreeScreen extends Screen {
     protected static ISkillTreeTabGui lastSelected;
     protected ISkillTreeTabGui selected;
     protected int tabPage, maxPages;
-    protected Minecraft minecraft;
 
     protected int guiLeft;
     protected int guiTop;
@@ -126,7 +125,7 @@ public class SkillTreeScreen extends Screen {
     public void render(int mouseX, int mouseY, float partialTicks) {
         // TODO Clean up
         this.renderBackground();
-        this.renderInside(mouseX, mouseY, guiLeft, guiTop);
+        this.renderInside(mouseX, mouseY, partialTicks);
         if (maxPages > 0) {
             String page = String.format("%d / %d", tabPage + 1, maxPages + 1);
             int width = this.font.getStringWidth(page);
@@ -134,9 +133,88 @@ public class SkillTreeScreen extends Screen {
             this.font.drawStringWithShadow(page, guiLeft + (xSize / 2f) - (width / 2f), guiTop - 44, -1);
         }
 
-        this.renderWindow(guiLeft, guiTop);
-        this.renderMisc(mouseX, mouseY);
+        this.renderWindow(mouseX, mouseY, partialTicks);
+        this.renderMisc(mouseX, mouseY, partialTicks);
         super.render(mouseX, mouseY, partialTicks);
+    }
+
+    protected void renderInside(int mouseX, int mouseY, float partialTicks) {
+        if (getSelected() == null) {
+            // Renders null
+            fill(guiLeft + 9, guiTop + 18, guiLeft + 9 + 234, guiTop + 18 + 113, -16777216);
+            String s = I18n.format("skilltree.empty");
+            int i = this.font.getStringWidth(s);
+            this.font.drawString(s, (float) (guiLeft + 9 + 117 - i / 2), (float) (guiTop + 18 + 56 - 9 / 2), -1);
+            this.font.drawString(":(", (float) (guiLeft + 9 + 117 - this.font.getStringWidth(":(") / 2), (float) (guiTop + 18 + 113 - 9), -1);
+        } else {
+            getSelected().preRender(mouseX, mouseY, partialTicks);
+            RenderSystem.pushMatrix();
+            RenderSystem.translatef((float) (guiLeft + 9), (float) (guiTop + 18), 0.0F);
+            getSelected().render(mouseX, mouseY, partialTicks);
+            RenderSystem.popMatrix();
+            getSelected().postRender(mouseX, mouseY, partialTicks);
+            RenderSystem.depthFunc(515);
+            RenderSystem.disableDepthTest();
+        }
+    }
+
+    protected void renderWindow(int mouseX, int mouseY, float partialTicks) {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.enableBlend();
+        this.minecraft.getTextureManager().bindTexture(SkillTreeBackground.WINDOW);
+        this.blit(guiLeft, guiTop, 0, 0, xSize, ySize);
+        this.minecraft.getTextureManager().bindTexture(SkillTreeBackground.TABS);
+
+        for (ISkillTreeTabGui tabGui : tabs.values()) {
+            if (tabGui.getPage() == tabPage && tabGui != getSelected())
+                tabGui.drawTab(guiLeft, guiTop, false);
+        }
+        getSelected().drawTab(guiLeft, guiTop, true);
+
+        RenderSystem.enableRescaleNormal();
+        RenderSystem.defaultBlendFunc();
+
+        for (ISkillTreeTabGui tabGui : tabs.values()) {
+            if (tabGui.getPage() == tabPage)
+                tabGui.drawIcon(guiLeft, guiTop, this.itemRenderer);
+        }
+
+        RenderSystem.disableBlend();
+
+        if (getSelected() != null)
+            this.font.drawString(getSelected().getDisplayInfo().getTitle().getFormattedText(), (float) (guiLeft + 8), (float) (guiTop + 6), 4210752);
+    }
+
+    protected void renderMisc(int mouseX, int mouseY, float partialTicks) {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        if (getSelected() != null) {
+            int adjustedMouseX = mouseX - guiLeft - 9;
+            int adjustedMouse = mouseY - guiTop - 18;
+
+            getSelected().preRenderAdjusted(adjustedMouseX, adjustedMouse, partialTicks);
+            RenderSystem.pushMatrix();
+            RenderSystem.translatef((float) (guiLeft + 9), (float) (guiTop + 18), 400.0F);
+            getSelected().renderAdjusted(adjustedMouseX, adjustedMouse, partialTicks);
+            RenderSystem.popMatrix();
+            getSelected().postRenderAdjusted(adjustedMouseX, adjustedMouse, partialTicks);
+        }
+
+        // TODO Sort out
+        if (tabs.size() > 1) {
+            Optional<IGuiEventListener> listener = getEventListenerForPos(mouseX - guiLeft, mouseY - guiTop);
+            if (listener.isPresent() && listener.get() instanceof ISkillTreeTabGui) {
+                if (listener.get() != getSelected()) {
+                    if (getSelected() == null || getSelected().getFocused() == null ||
+                            !getSelected().getFocused().withinBounds(mouseX - guiLeft - 9, mouseY - guiTop - 18)) {
+                        RenderSystem.pushMatrix();
+                        RenderSystem.translatef(0, 0, 400);
+                        renderTooltip(((ISkillTreeTabGui) listener.get()).getDisplayInfo().getTitle().getFormattedText(), mouseX, mouseY);
+                        RenderSystem.popMatrix();
+                    }
+                }
+            }
+        }
+
     }
 
     @Override
@@ -183,73 +261,5 @@ public class SkillTreeScreen extends Screen {
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
         getSelected().mouseMoved(mouseX, mouseY);
-    }
-
-    protected void renderInside(int mouseX, int mouseY, int guiLeft, int guiTop) {
-        if (getSelected() == null) {
-            fill(guiLeft + 9, guiTop + 18, guiLeft + 9 + 234, guiTop + 18 + 113, -16777216);
-            String s = I18n.format("skilltree.empty");
-            int i = this.font.getStringWidth(s);
-            this.font.drawString(s, (float) (guiLeft + 9 + 117 - i / 2), (float) (guiTop + 18 + 56 - 9 / 2), -1);
-            this.font.drawString(":(", (float) (guiLeft + 9 + 117 - this.font.getStringWidth(":(") / 2), (float) (guiTop + 18 + 113 - 9), -1);
-        } else {
-            RenderSystem.pushMatrix();
-            getSelected().preDrawContents(guiLeft, guiTop, mouseX, mouseY);
-            RenderSystem.translatef((float) (guiLeft + 9), (float) (guiTop + 18), 0.0F);
-            getSelected().drawContents(guiLeft, guiTop, mouseX, mouseY);
-            RenderSystem.popMatrix();
-            getSelected().postDrawContents(guiLeft, guiTop, mouseX, mouseY);
-            RenderSystem.depthFunc(515);
-            RenderSystem.disableDepthTest();
-        }
-    }
-
-    public void renderWindow(int guiLeft, int guiTop) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.enableBlend();
-        this.minecraft.getTextureManager().bindTexture(SkillTreeBackground.WINDOW);
-        this.blit(guiLeft, guiTop, 0, 0, xSize, ySize);
-        this.minecraft.getTextureManager().bindTexture(SkillTreeBackground.TABS);
-
-        for (ISkillTreeTabGui tabGui : tabs.values()) {
-            if (tabGui.getPage() == tabPage && tabGui != getSelected())
-                tabGui.drawTab(guiLeft, guiTop, false);
-        }
-        getSelected().drawTab(guiLeft, guiTop, true);
-
-        RenderSystem.enableRescaleNormal();
-        RenderSystem.defaultBlendFunc();
-
-        for (ISkillTreeTabGui tabGui : tabs.values()) {
-            if (tabGui.getPage() == tabPage)
-                tabGui.drawIcon(guiLeft, guiTop, this.itemRenderer);
-        }
-
-        RenderSystem.disableBlend();
-
-        // Draws Skill Tree Tooltip
-        if (getSelected() != null)
-            this.font.drawString(getSelected().getDisplayInfo().getTitle().getFormattedText(), (float) (guiLeft + 8), (float) (guiTop + 6), 4210752);
-    }
-
-    protected void renderMisc(int mouseX, int mouseY) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        if (getSelected() != null) {
-            RenderSystem.pushMatrix();
-            RenderSystem.enableDepthTest();
-            RenderSystem.translatef((float) (guiLeft + 9), (float) (guiTop + 18), 400.0F);
-            getSelected().drawMisc(guiLeft, guiTop, mouseX - guiLeft - 9, mouseY - guiTop - 18);
-            RenderSystem.disableDepthTest();
-            RenderSystem.popMatrix();
-        }
-
-        if (tabs.size() > 1) {
-            Optional<IGuiEventListener> listener = getEventListenerForPos(mouseX - guiLeft, mouseY - guiTop);
-            if (listener.isPresent() && listener.get() instanceof ISkillTreeTabGui) {
-                if (listener.get() != getSelected())
-                    renderTooltip(((ISkillTreeTabGui) listener.get()).getDisplayInfo().getTitle().getFormattedText(), mouseX, mouseY);
-            }
-        }
-
     }
 }

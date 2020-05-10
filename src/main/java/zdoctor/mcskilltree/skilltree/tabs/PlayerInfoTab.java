@@ -62,7 +62,7 @@ public class PlayerInfoTab extends SkillTree {
         public static int left_height = 39;
         public static int right_height = 39;
 
-        protected int lastMouseX, lastMouseY;
+
         protected int lastPlayerHealth;
 
         public PlayerInfoTabGui() {
@@ -71,8 +71,8 @@ public class PlayerInfoTab extends SkillTree {
         }
 
         public static void drawEntityOnScreen(int left, int top, int scale, float mouseX, float mouseY, LivingEntity entity) {
-            float angle1 = (float) Math.atan((double) (mouseX / 40.0F));
-            float angle2 = (float) Math.atan((double) (mouseY / 40.0F));
+            float angle1 = (float) Math.atan(mouseX / 40.0F);
+            float angle2 = (float) Math.atan(mouseY / 40.0F);
             RenderSystem.pushMatrix();
             RenderSystem.translatef((float) left, (float) top, 1050.0F);
             RenderSystem.scalef(1.0F, 1.0F, -1.0F);
@@ -111,9 +111,14 @@ public class PlayerInfoTab extends SkillTree {
 
 
         @Override
-        public void drawContents(int guiLeft, int guiTop, int mouseX, int mouseY) {
+        public void render(int mouseX, int mouseY, float partialTicks) {
+            super.render(mouseX, mouseY, partialTicks);
+        }
+
+        @Override
+        public void renderAdjusted(int mouseX, int mouseY, float partialTicks) {
             // TODO Finish showing player data
-            super.drawContents(guiLeft, guiTop, mouseX, mouseY);
+            super.renderAdjusted(mouseX, mouseY, partialTicks);
 
             int xOffset = MathHelper.floor(this.scrollX);
             int yOffset = MathHelper.floor(this.scrollY);
@@ -121,7 +126,7 @@ public class PlayerInfoTab extends SkillTree {
             int y = (yOffset % 16) + 64;
 
             if (minecraft.player != null)
-                drawEntityOnScreen(x, y, 30, guiLeft + x + 9 - mouseX, guiTop + 36 - mouseY, minecraft.player);
+                drawEntityOnScreen(x, y, 30, 26 - mouseX, 26 - mouseY, minecraft.player);
 
             FontRenderer fontRenderer = minecraft.fontRenderer;
             int row = 0;
@@ -140,8 +145,6 @@ public class PlayerInfoTab extends SkillTree {
                 drawPlayerAttributeInfo(fontRenderer, 55, 5 + offset * row++, attribute, attribute.getName());
             }
 
-            lastMouseX = mouseX;
-            lastMouseY = mouseY;
         }
 
         @Override
