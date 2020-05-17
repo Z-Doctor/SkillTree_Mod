@@ -9,6 +9,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import zdoctor.mcskilltree.skilltree.SkillFrameType;
 import zdoctor.mcskilltree.skilltree.Vector2;
+import zdoctor.mcskilltree.util.text.SkillTranslationTextComponent;
 
 public class SkillDisplayInfo {
     protected final Skill skill;
@@ -32,8 +33,8 @@ public class SkillDisplayInfo {
     public SkillDisplayInfo(Skill skill, int x, int y) {
         this.skill = skill;
         // TODO Add SkillTranslation Component that will handle add arguments such as level
-        title = new TranslationTextComponent(skill.getUnlocalizedName() + ".title", this);
-        description = new TranslationTextComponent(skill.getUnlocalizedName() + ".desc", this);
+        title = new TranslationTextComponent(skill.getUnlocalizedName() + ".title");
+        description = new TranslationTextComponent(skill.getUnlocalizedName() + ".desc");
 
         position = new Vector2(x, y);
         offset = new Vector2();

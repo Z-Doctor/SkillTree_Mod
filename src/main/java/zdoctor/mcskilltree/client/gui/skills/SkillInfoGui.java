@@ -13,7 +13,9 @@ import zdoctor.mcskilltree.api.ClientSkillApi;
 import zdoctor.mcskilltree.api.ISkillInfoGui;
 import zdoctor.mcskilltree.api.SkillApi;
 import zdoctor.mcskilltree.client.gui.skilltree.AbstractSkillTreeGui;
+import zdoctor.mcskilltree.skills.Skill;
 import zdoctor.mcskilltree.skilltree.SkillTreeBackground;
+import zdoctor.mcskilltree.util.text.SkillTranslationTextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +27,7 @@ public class SkillInfoGui extends Screen implements ISkillInfoGui {
             McSkillTree.MODID, "textures/gui/skilltree/skill_info.png");
 
     protected final SkillEntryGui entryGui;
+    protected final Skill skill;
     protected SkillTreeBackground background;
 
     protected Integer x;
@@ -34,12 +37,24 @@ public class SkillInfoGui extends Screen implements ISkillInfoGui {
 
     protected final List<BiFunction<Double, Double, Boolean>> hitBoxes = new ArrayList<>();
 
+    protected SkillTranslationTextComponent unowned;
+    protected SkillTranslationTextComponent owned;
+
+    protected SkillTranslationTextComponent defaultUnowned;
+    protected SkillTranslationTextComponent defaultOwned;
+
     public SkillInfoGui(SkillEntryGui entryGui) {
         super(entryGui.getDisplayInfo().getTitle());
         this.minecraft = Minecraft.getInstance();
         this.entryGui = entryGui;
+        this.skill = entryGui.getSkill();
         this.width = 131;
         this.height = 83;
+
+        this.unowned = new SkillTranslationTextComponent(skill.getUnlocalizedName() + ".entry.unowned",
+                ClientSkillApi.getPlayerHandler(), skill).withDefault("default.entry.unowned");
+        this.owned = new SkillTranslationTextComponent(skill.getUnlocalizedName() + ".entry.owned",
+                ClientSkillApi.getPlayerHandler(), skill).withDefault("default.entry.owned");
 
         x = getSkillEntry().getX() + MathHelper.floor(getSkillEntry().getTab().getScrollX());
         y = getSkillEntry().getY() + MathHelper.floor(getSkillEntry().getTab().getScrollY());
@@ -48,11 +63,14 @@ public class SkillInfoGui extends Screen implements ISkillInfoGui {
         // TODO Add more buttons based on context (buy, activate, deactivate, upgrade, etc) or make button
         //  text change based on context
         // TODO Show preview of next skill based on upgrade and/or render tooltip that describes next tier
+        // TODO Make better way to tell if buy button should be added
+        // TODO Make cost appear when you can buy
+        // TODO Redesign info screen
         this.background = SkillTreeBackground.DEFAULT.with(0, 7, 0, 4);
-        if (!ClientSkillApi.hasSkill(entryGui.getSkill()))
+        if (!ClientSkillApi.hasSkill(entryGui.getSkill()) || getSkillEntry().getSkill().canBuyMultiple())
             addButton(new Button(x + 29, y - 18, 50, 20, "Buy", button -> {
                 if (SkillApi.buySkill(minecraft.player, getSkillEntry().getSkill())) {
-                    if(!getSkillEntry().getSkill().canBuyMultiple()) {
+                    if (!getSkillEntry().getSkill().canBuyMultiple()) {
                         children.remove(button);
                         buttons.remove(button);
                     }
@@ -62,6 +80,7 @@ public class SkillInfoGui extends Screen implements ISkillInfoGui {
             }));
 
         hitBoxes.add((mouseX, mouseY) -> mouseX >= x + 15 && mouseX < x + 15 + 131 && mouseY <= y + 15 && mouseY > y - 83 + 15);
+        // TODO Make sure this hitbox is right
         hitBoxes.add((mouseX, mouseY) -> mouseX >= x + 10 && mouseX < x + 10 + 23 && mouseY <= y + 15 - 83 - 5 + 23 && mouseY > y + 15 - 83 - 5);
     }
 
@@ -116,11 +135,14 @@ public class SkillInfoGui extends Screen implements ISkillInfoGui {
     protected void renderInfo(int mouseX, int mouseY, float partialTicks) {
         int offset = minecraft.fontRenderer.FONT_HEIGHT + 2;
         int count = -1;
+        // TODO Add more info (circle with question mark) that renders tooltip when hovered
         // TODO Localize render info
-        // TODO Change font color
-        minecraft.fontRenderer.drawString("Cost: 10", tempX, tempY + offset * (count += 1), 0);
-        minecraft.fontRenderer.drawString("Type: Passive", tempX, tempY + offset * (count += 1), 0);
-        minecraft.fontRenderer.drawString("Max Tier: 1", tempX, tempY + offset * (count + 1), 0);
+        // TODO Adjust font color
+        SkillTranslationTextComponent translate = ClientSkillApi.hasSkill(skill) ? owned : unowned;
+
+        for (String s : translate.getFormattedText().split("\n")) {
+            minecraft.fontRenderer.drawString(s, tempX, tempY + offset * (count += 1), 0);
+        }
     }
 
     protected void renderWindow(int mouseX, int mouseY, float partialTicks) {

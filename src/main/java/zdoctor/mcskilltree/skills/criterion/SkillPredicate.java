@@ -10,23 +10,30 @@ import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootParameter;
+import zdoctor.mcskilltree.McSkillTree;
 import zdoctor.mcskilltree.api.ISkillHandler;
 import zdoctor.mcskilltree.api.ISkillProperty;
 import zdoctor.mcskilltree.api.SkillApi;
 import zdoctor.mcskilltree.registries.SkillTreeRegistries;
 import zdoctor.mcskilltree.skills.Skill;
-import zdoctor.mcskilltree.skills.SkillData;
+import zdoctor.mcskilltree.skills.properties.SkillTierProperty;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class SkillPredicate {
+    private static final Map<ResourceLocation, ISkillProperty> custom_properties = new HashMap<>();
+//    private static final Map<ResourceLocation, Object> unmod_elements = Collections.unmodifiableMap(custom_elements);
+
+    private final ISkillProperty[] properties;
+
     public static final SkillPredicate ANY = new SkillPredicate();
+
+    static {
+        SkillPredicate.register(new ResourceLocation("tier"), SkillTierProperty.UNBOUNDED);
+    }
 
     private final Skill skill;
     private final LootContext.EntityTarget source;
-    private final ISkillProperty<?>[] properties;
 
     public SkillPredicate() {
         skill = null;
@@ -34,14 +41,14 @@ public class SkillPredicate {
         properties = null;
     }
 
-    public LootParameter<? extends Entity> getSource() {
-        return source != null ? source.getParameter() : null;
-    }
-
-    public SkillPredicate(Skill skill, LootContext.EntityTarget source, ISkillProperty<?>[] properties) {
+    public SkillPredicate(Skill skill, LootContext.EntityTarget source, ISkillProperty[] properties) {
         this.skill = skill;
         this.source = source;
         this.properties = properties;
+    }
+
+    public static void register(ResourceLocation name, ISkillProperty property) {
+        custom_properties.put(name, property);
     }
 
     public boolean test(LivingEntity entity) {
@@ -52,15 +59,14 @@ public class SkillPredicate {
             return true;
         else if (!handler.hasSkill(skill))
             return false;
+        else if (properties == null)
+            return true;
 
-        if (properties != null) {
-            SkillData data = handler.getData(skill);
-            for (ISkillProperty<?> property : properties) {
-                if (!data.match(property))
-                    return false;
-            }
-        }
-        return true;
+        return Arrays.stream(properties).allMatch(property -> property.test(skill, handler));
+    }
+
+    public LootParameter<? extends Entity> getSource() {
+        return source != null ? source.getParameter() : null;
     }
 
     public static SkillPredicate deserialize(JsonElement element) {
@@ -78,30 +84,27 @@ public class SkillPredicate {
             if (!jsonObject.has("properties"))
                 return new SkillPredicate(skill, source, null);
 
-            List<ISkillProperty<?>> skillProperties = new ArrayList<>();
-            skill.getProperties(skillProperties);
-
-            List<ISkillProperty<?>> propertyList = new ArrayList<>();
+            List<ISkillProperty> properties = new ArrayList<>();
 
             JsonArray jsonArray = JSONUtils.getJsonArray(jsonObject.get("properties"), "properties_array");
             if (!jsonArray.isJsonNull()) {
                 for (JsonElement jsonElement : jsonArray) {
                     JsonObject propObject = JSONUtils.getJsonObject(jsonElement, "properties_element");
-                    ISkillProperty<?> found = null;
-                    for (ISkillProperty<?> property : skillProperties) {
-                        if (!propObject.has(property.getKey()))
+                    for (ResourceLocation location : custom_properties.keySet()) {
+                        String key;
+                        if (location.getNamespace().equalsIgnoreCase("minecraft") ||
+                                location.getNamespace().equalsIgnoreCase(McSkillTree.MODID))
+                            key = location.getPath();
+                        else
+                            key = location.toString();
+                        if (!propObject.has(key))
                             continue;
-                        ISkillProperty<?> prop = property.deserialize(propObject);
-                        propertyList.add(prop);
-                        found = property;
-                        break;
+                        properties.add(custom_properties.get(location).deserialize(propObject));
                     }
-                    if (found != null)
-                        skillProperties.remove(found);
                 }
             }
 
-            return new SkillPredicate(skill, source, propertyList.toArray(new ISkillProperty<?>[0]));
+            return new SkillPredicate(skill, source, properties.toArray(new ISkillProperty[0]));
         } else {
             return ANY;
         }
@@ -120,20 +123,18 @@ public class SkillPredicate {
                 jsonobject.addProperty("entity", source.toString());
             }
 
-            if (properties == null)
+            if (custom_properties.isEmpty() || properties == null)
                 return jsonobject;
 
             JsonArray jsonArray = new JsonArray();
 
-            for (ISkillProperty<?> property : properties) {
+            for (ISkillProperty property : properties) {
                 jsonArray.add(property.serialize());
             }
-            jsonobject.add("properties", jsonArray);
+            if (jsonArray.size() > 0)
+                jsonobject.add("properties", jsonArray);
             return jsonobject;
         }
     }
 
-    public static class Builder {
-
-    }
 }

@@ -8,24 +8,21 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.network.PacketDistributor;
 import zdoctor.mcskilltree.McSkillTree;
-import zdoctor.mcskilltree.registries.SkillTreePacketRegister;
 import zdoctor.mcskilltree.api.IEffectSkill;
 import zdoctor.mcskilltree.api.ISkillHandler;
+import zdoctor.mcskilltree.registries.SkillTreePacketRegister;
 import zdoctor.mcskilltree.skilltree.packet.SkillTreePacket;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class SkillHandler implements ISkillHandler {
     @CapabilityInject(ISkillHandler.class)
@@ -111,6 +108,8 @@ public class SkillHandler implements ISkillHandler {
         if (hasSkill(skill))
             return false;
         SkillData skillData = new SkillData(this, skill);
+        skillData.setTier(1);
+        skillData.setActive(true);
         Skill_Codex.put(skill, skillData);
 
         if (isServer()) {
@@ -145,7 +144,19 @@ public class SkillHandler implements ISkillHandler {
 
     @Override
     public SkillData getData(Skill skill) {
-        return Skill_Codex.getOrDefault(skill, null);
+        return Skill_Codex.getOrDefault(skill, new SkillData(this, skill));
+    }
+
+    @Override
+    public boolean isActive(Skill skill) {
+        return hasSkill(skill) && Skill_Codex.get(skill).isActive();
+    }
+
+    @Override
+    public void setActive(Skill skill, boolean active) {
+        if (!hasSkill(skill))
+            return;
+        Skill_Codex.get(skill).setActive(active);
     }
 
     @Override
@@ -155,7 +166,7 @@ public class SkillHandler implements ISkillHandler {
 
     @Override
     public void setTier(Skill skill, int tier) {
-        if(!hasSkill(skill))
+        if (!hasSkill(skill))
             return;
         Skill_Codex.get(skill).setTier(tier);
     }
@@ -169,9 +180,9 @@ public class SkillHandler implements ISkillHandler {
     public boolean buySkill(Skill skill) {
         if (!canBuySkill(skill))
             return false;
-        if(!deductSkillPoints(skill.getCost(this), false))
+        if (!deductSkillPoints(skill.getCost(this), false))
             return false;
-        if(hasSkill(skill))
+        if (hasSkill(skill))
             skill.onBuy(this, false);
         else {
             give(skill);
@@ -260,10 +271,11 @@ public class SkillHandler implements ISkillHandler {
 
         ListNBT skillDataList = new ListNBT();
         for (SkillData skillData : Skill_Codex.values()) {
-            CompoundNBT skillDataTag = new CompoundNBT();
-            skillDataTag.putString("skill_name", Objects.requireNonNull(skillData.getSkillName()));
-            skillData.writeAdditional(skillDataTag);
-            skillDataList.add(skillDataTag);
+            CompoundNBT tag = new CompoundNBT();
+//            tag.putString("skill_name", skillData.getSkill().getName());
+//            skillData.writeAdditional(tag);
+            skillData.write(tag);
+            skillDataList.add(tag);
         }
         entityData.put("skills", skillDataList);
 
@@ -278,19 +290,20 @@ public class SkillHandler implements ISkillHandler {
         ListNBT skillDataList = nbt.getList("skills", Constants.NBT.TAG_COMPOUND);
         for (INBT inbt : skillDataList) {
             CompoundNBT skillDataTag = (CompoundNBT) inbt;
-            ResourceLocation key = new ResourceLocation(skillDataTag.getString("skill_name"));
-            Skill skill = GameRegistry.findRegistry(Skill.class).getValue(key);
-            if (skill == null) {
-                McSkillTree.LOGGER.error("Could not find skill {}: skipping", key);
+//            ResourceLocation key = new ResourceLocation(skillDataTag.getString("skill_name"));
+//            Skill skill = SkillTreeRegistries.SKILLS.getValue(key);
+            SkillData data = SkillData.read(this, skillDataTag);
+            if (data == SkillData.EMPTY) {
+                McSkillTree.LOGGER.error("Could not find skill, skipping: {}", skillDataTag);
             } else {
-
+                Skill skill = data.getSkill();
                 if (give(skill)) {
-                    McSkillTree.LOGGER.debug("New Skill {}", key);
-                    SkillData skillData = Skill_Codex.get(skill);
-                    skillData.readAdditional(skillDataTag);
+                    McSkillTree.LOGGER.debug("New Skill {}", skill.getName());
+//                    SkillData skillData = Skill_Codex.get(skill);
+                    Skill_Codex.put(skill, data);
                 } else {
                     missing.remove(skill);
-                    McSkillTree.LOGGER.debug("Reloaded Skill {}", key);
+                    McSkillTree.LOGGER.debug("Reloaded Skill {}", skill.getName());
                 }
             }
         }

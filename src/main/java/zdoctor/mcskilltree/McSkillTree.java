@@ -57,7 +57,12 @@ public class McSkillTree {
         ResourceLocation SKILL_TREES_RES = new ResourceLocation("skill_trees");
         ResourceLocation SKILLS_RES = new ResourceLocation("skills");
         new RegistryBuilder<SkillTree>().setName(SKILL_TREES_RES).setType(SkillTree.class).create();
-        new RegistryBuilder<Skill>().setName(SKILLS_RES).setType(Skill.class).create();
+        new RegistryBuilder<Skill>().setName(SKILLS_RES).setType(Skill.class).setDefaultKey(new ResourceLocation("none")).create();
+    }
+
+    @SubscribeEvent
+    public static void registerSkills(RegistryEvent.Register<Skill> event) {
+        event.getRegistry().register(new Skill("none", Items.AIR));
     }
 
     @SubscribeEvent

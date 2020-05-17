@@ -1,27 +1,13 @@
 package zdoctor.mcskilltree.api;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import net.minecraft.nbt.CompoundNBT;
+import zdoctor.mcskilltree.skills.Skill;
 
-import java.util.function.Supplier;
+import java.util.function.BiPredicate;
 
-public interface ISkillProperty<T> {
-    T getValue();
+public interface ISkillProperty extends BiPredicate<Skill, ISkillHandler> {
 
-    String getKey();
+    JsonElement serialize();
+    ISkillProperty deserialize(JsonElement element);
 
-    void setValue(Supplier<Object> value);
-
-    <E> E cast();
-
-    void writeTo(CompoundNBT tag);
-
-    void from(CompoundNBT tag);
-
-    ISkillProperty<T> copy();
-
-    JsonObject serialize();
-
-    ISkillProperty<?> deserialize(JsonElement element);
 }

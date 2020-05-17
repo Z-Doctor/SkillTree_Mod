@@ -28,10 +28,6 @@ public class HasSkill implements ILootCondition {
                 LootParameters.DIRECT_KILLER_ENTITY, LootParameters.LAST_DAMAGE_PLAYER);
     }
 
-    public static ILootCondition.IBuilder builder(SkillPredicate predicate) {
-        return () -> new HasSkill(predicate);
-    }
-
     @Override
     public boolean test(LootContext lootContext) {
         LivingEntity entity = (LivingEntity) lootContext.get(predicate.getSource());

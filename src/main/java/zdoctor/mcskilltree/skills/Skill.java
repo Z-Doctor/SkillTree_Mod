@@ -1,33 +1,41 @@
 package zdoctor.mcskilltree.skills;
 
 import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistryEntry;
-import zdoctor.mcskilltree.api.ClientSkillApi;
-import zdoctor.mcskilltree.api.IRequirement;
-import zdoctor.mcskilltree.api.ISkillHandler;
-import zdoctor.mcskilltree.api.ISkillProperty;
+import net.minecraftforge.registries.ObjectHolder;
+import zdoctor.mcskilltree.McSkillTree;
+import zdoctor.mcskilltree.api.*;
 import zdoctor.mcskilltree.registries.SkillTreeRegistries;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
 /**
  * Basic skills will act as yes/no where modders can test if a player has a skill
  */
-public class Skill extends ForgeRegistryEntry<Skill> {
+public class Skill extends ForgeRegistryEntry<Skill> implements ISkill {
+    @ObjectHolder(McSkillTree.MODID + ":none")
+    public static final Skill NONE = null;
+    public static final ISkillGetter<Integer> COST_GETTER = Skill::getCost;
+    public static final ISkillGetter<Integer> TIER_GETTER = (skill, handler) -> handler.getTier(skill);
+//    public static final ISkillProperty<Boolean> ACTIVE = SkillProperties.withDefault("active", false);
+//    public static final ISkillProperty<Enum<Type>> TYPE = SkillProperties.withDefault("type", Type.PASSIVE).withOverride(Skill::getType);
 
-    public static final ISkillProperty<Integer> TIER = SkillProperty.withDefault("skill_tier", 1);
-    public static final ISkillProperty<Boolean> ACTIVE = SkillProperty.withDefault("skill_active", true);
+
 
     private String translationKey;
 
@@ -38,9 +46,11 @@ public class Skill extends ForgeRegistryEntry<Skill> {
     protected Set<Skill> children;
     protected Set<IRequirement> requirements;
 
-    protected int cost = 1;
-    protected Predicate<LivingEntity> visibleCondition = Predicates.alwaysTrue();
+    private final Map<ResourceLocation, ISkillGetter<?>> properties = Maps.newHashMap();
 
+    protected int cost = 1;
+    protected Type type = Type.PASSIVE;
+    protected Predicate<LivingEntity> visibleCondition = Predicates.alwaysTrue();
 
     // TODO Change positions to be doubles, create builder to make display info and remove x, y from constructor
     public Skill(String name, Item icon) {
@@ -52,7 +62,7 @@ public class Skill extends ForgeRegistryEntry<Skill> {
         this.displayText = new StringTextComponent(Objects.requireNonNull(getRegistryName()).toString());
         // TODO Add way to automate placing
         displayInfo = new SkillDisplayInfo(this).setIcon(icon);
-        registerSkill();
+        initSkill();
 
     }
 
@@ -60,11 +70,26 @@ public class Skill extends ForgeRegistryEntry<Skill> {
         setRegistryName(name);
         this.displayText = new StringTextComponent(Objects.requireNonNull(getRegistryName()).toString());
         this.displayInfo = displayInfo;
-        registerSkill();
+        initSkill();
     }
 
-    protected void registerSkill() {
+    protected void initSkill() {
         SkillTreeRegistries.SKILLS.register(this);
+        addPropertyOverride(new ResourceLocation("cost"), COST_GETTER);
+        addPropertyOverride(new ResourceLocation("tier"), TIER_GETTER);
+    }
+
+    public final void addPropertyOverride(ResourceLocation key, ISkillGetter<?> getter) {
+        this.properties.put(key, getter);
+    }
+
+    public Map<ResourceLocation, ISkillGetter<?>> getProperties() {
+        return ImmutableMap.copyOf(properties);
+    }
+
+    @Nullable
+    public ISkillGetter<?> getProperty(ResourceLocation key) {
+        return this.properties.get(key);
     }
 
     public Skill position(int x, int y) {
@@ -98,6 +123,14 @@ public class Skill extends ForgeRegistryEntry<Skill> {
         return this;
     }
 
+    public Skill setType(Type type) {
+        this.type = type;
+        return this;
+    }
+
+    public Type getType() {
+        return type;
+    }
 
     public String getUnlocalizedName() {
         if (translationKey == null)
@@ -186,29 +219,11 @@ public class Skill extends ForgeRegistryEntry<Skill> {
             parent.addChild(this);
     }
 
-    /**
-     * Used to get additional data that may needed to be read or written about a skill a player has.
-     *
-     * @param properties - A map of properties in which to add additional properties. The key must be unique for proper
-     *                   so prefixing the name with your modid is recommended.
-     */
-    public void getProperties(List<ISkillProperty<?>> properties) {
-        properties.add(TIER);
-        properties.add(ACTIVE);
-    }
-
     public boolean canBuy(ISkillHandler handler) {
         return (!handler.hasSkill(this) || canBuyMultiple()) && hasRequirements(handler) && handler.getSkillPoints() >= getCost(handler);
     }
 
 
-    /**
-     * Applies logic after the skill is bought and cost is deducted
-     *
-     * @param handler - The handler that bought the skill
-     */
-    public void onBuy(ISkillHandler handler, boolean firstBuy) {
-    }
 
     private boolean hasRequirements(ISkillHandler handler) {
         return getRequirements().stream().allMatch(requirement -> requirement.test(handler));
@@ -237,7 +252,6 @@ public class Skill extends ForgeRegistryEntry<Skill> {
     /**
      * Get's the price based off the handler.
      *
-     * @param handler - The handler to base the price off of
      * @return The cost or -1 if no cost (i.e. can't be bought)
      */
     public int getCost(ISkillHandler handler) {
@@ -250,4 +264,5 @@ public class Skill extends ForgeRegistryEntry<Skill> {
         getDisplayInfo().setOffset(x, y);
         return this;
     }
+
 }

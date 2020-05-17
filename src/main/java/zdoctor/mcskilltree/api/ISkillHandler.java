@@ -16,32 +16,55 @@ import javax.annotation.Nullable;
 public interface ISkillHandler extends ICapabilitySerializable<CompoundNBT>, Capability.IStorage<ISkillHandler> {
 
     void setOwner(LivingEntity entity);
+
     LivingEntity getOwner();
+
     boolean isDirty();
+
     void markDirty();
+
     void markClean();
+
     void setSkillPoints(int amount);
+
     int getSkillPoints();
+
     boolean addSkillPoints(int amount);
 
     /**
      * Should attempt to deduct skill points from handler and only effect the amount
      * if there is enough or if @force is true
+     *
      * @param amount - The Amount to deduct
-     * @param force - Whether to force deduction
+     * @param force  - Whether to force deduction
      * @return If points were taken
      */
     boolean deductSkillPoints(int amount, boolean force);
+
     boolean give(Skill skill);
+
     boolean revoke(Skill skill);
+
     boolean hasSkill(Skill skill);
+
     SkillData getData(Skill skill);
+
+    boolean isActive(Skill skill);
+
+    void setActive(Skill skill, boolean active);
+
     int getTier(Skill skill);
+
     void setTier(Skill skill, int tier);
+
     boolean hasRequirements(Skill skill);
+
     void updateSkillData();
+
     boolean canBuySkill(Skill skill);
+
     boolean buySkill(Skill skill);
+
     void onPlayerRespawn(ISkillHandler oldSkillHandler);
 
     ISkillHandler EMPTY = new ISkillHandler() {
@@ -119,6 +142,17 @@ public interface ISkillHandler extends ICapabilitySerializable<CompoundNBT>, Cap
         public void setTier(Skill skill, int tier) {
 
         }
+
+        @Override
+        public boolean isActive(Skill skill) {
+            return false;
+        }
+
+        @Override
+        public void setActive(Skill skill, boolean active) {
+
+        }
+
 
         @Override
         public boolean hasRequirements(Skill skill) {

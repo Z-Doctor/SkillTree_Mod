@@ -101,20 +101,19 @@ public class SkillTreeCommands {
                 if (success)
                     effected += 1;
             }
-            // TODO Send feedback
             CommandSource source = command.getSource();
             String key = give ? "give" : "take";
             if (effected == 0) {
                 if (targets.size() == 1) {
-                    throw new CommandException(new TranslationTextComponent(key + ".skillpoints.failure", amount, targets.iterator().next().getDisplayName()));
+                    throw new CommandException(new TranslationTextComponent(key + ".skillpoint" + (amount == 1 ? "." : "s.") + "failure", amount, targets.iterator().next().getDisplayName()));
                 } else {
-                    throw new CommandException(new TranslationTextComponent(key + ".many.failure", amount, targets.size()));
+                    throw new CommandException(new TranslationTextComponent(key + ".skillpoint" + (amount == 1 ? "." : "s.") + "many.failure", amount, targets.size()));
                 }
             } else {
                 if (targets.size() == 1) {
-                    source.sendFeedback(new TranslationTextComponent(key + ".skillpoints.success", amount, targets.iterator().next().getDisplayName()), true);
+                    source.sendFeedback(new TranslationTextComponent(key + ".skillpoint" + (amount == 1 ? "." : "s.") + "success", amount, targets.iterator().next().getDisplayName()), true);
                 } else {
-                    source.sendFeedback(new TranslationTextComponent(key + ".skillpoints.many.success", amount, targets.size()), true);
+                    source.sendFeedback(new TranslationTextComponent(key + ".skillpoint" + (amount == 1 ? "." : "s.") + "many.success", amount, targets.size()), true);
                 }
             }
 
